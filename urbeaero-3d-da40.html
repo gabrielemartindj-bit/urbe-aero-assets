@@ -1,0 +1,1082 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="description" content="Urbe Aero Flight Academy - EASA Approved flight training. Diamond Fleet. Roma Urbe Airport.">
+<meta name="theme-color" content="#04081a">
+<title>Urbe Aero Flight Academy | Diamond DA40 · Roma Urbe LIRU</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@300;400;500;600;700&family=Barlow+Condensed:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+:root{--primary:#4db8e8;--bg:#04081a;--font-display:'Bebas Neue',sans-serif;--font-heading:'Barlow Condensed',sans-serif;--font-body:'Barlow',sans-serif;--font-mono:'Share Tech Mono',monospace}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;font-family:var(--font-body);background:var(--bg);color:#fff;-webkit-font-smoothing:antialiased}
+canvas{display:block;position:fixed;top:0;left:0;z-index:0}
+#ui{position:fixed;top:0;left:0;width:100%;height:100%;z-index:10;pointer-events:none;overflow:hidden}
+#ui>*{pointer-events:auto}
+
+#preloader{position:fixed;top:0;left:0;width:100%;height:100%;z-index:999;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .8s,visibility .8s}
+#preloader.hidden{opacity:0;visibility:hidden}
+.preloader-icon{width:50px;height:50px;border:3px solid rgba(77,184,232,.2);border-top-color:var(--primary);border-radius:50%;animation:spin .8s linear infinite}
+.preloader-text{font-family:var(--font-display);font-size:22px;letter-spacing:4px;color:var(--primary);margin-top:16px}
+.preloader-sub{font-family:var(--font-heading);font-size:11px;letter-spacing:3px;color:rgba(255,255,255,.3);margin-top:6px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+#hud{position:fixed;bottom:100px;left:50%;transform:translateX(-50%);z-index:90;display:flex;gap:20px;pointer-events:none;opacity:0;transition:opacity .8s}
+#hud.active{opacity:1}
+.hud-item{background:rgba(0,0,0,.6);backdrop-filter:blur(12px);border:1px solid rgba(77,184,232,.25);border-radius:12px;padding:10px 16px;text-align:center;min-width:80px}
+.hud-label{font-family:var(--font-heading);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--primary);margin-bottom:4px}
+.hud-value{font-family:var(--font-mono);font-size:22px;color:#fff;font-weight:700}
+.hud-unit{font-size:11px;color:rgba(255,255,255,.5);margin-left:2px}
+
+#toast-container{position:fixed;top:16px;right:16px;z-index:300;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.toast{padding:12px 20px;border-radius:14px;font-family:var(--font-heading);font-size:13px;font-weight:600;backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.1);box-shadow:0 8px 40px rgba(0,0,0,.6);animation:slideIn .35s ease;pointer-events:auto;cursor:pointer;max-width:380px}
+.toast.success{background:rgba(0,146,70,.25);color:#60d090}
+.toast.error{background:rgba(180,40,40,.25);color:#e08080}
+.toast.info{background:rgba(26,58,143,.3);color:var(--primary)}
+.toast.removing{animation:slideOut .25s ease forwards}
+@keyframes slideIn{from{transform:translateX(120%);opacity:0}to{transform:translateX(0);opacity:1}}
+@keyframes slideOut{to{transform:translateX(120%);opacity:0}}
+
+nav{position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:100;display:flex;align-items:center;gap:4px;padding:6px 14px;background:rgba(4,8,26,.55);backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,.08);border-radius:50px;box-shadow:0 8px 40px rgba(0,0,0,.6);max-width:96%}
+.nav-logo{font-family:var(--font-display);font-size:18px;letter-spacing:3px;color:var(--primary);cursor:pointer;padding:4px 10px;white-space:nowrap;background:none;border:none;border-radius:50px}
+.nav-btn{background:none;border:none;color:rgba(255,255,255,.5);font-family:var(--font-heading);font-size:12px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;padding:5px 12px;border-radius:20px;cursor:pointer;transition:all .25s;white-space:nowrap}
+.nav-btn:hover{color:#fff;background:rgba(255,255,255,.06)}
+.nav-btn.active{color:var(--primary);background:rgba(77,184,232,.15)}
+.nav-cta{font-family:var(--font-heading);font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;background:rgba(26,58,143,.8);color:#fff;border:1px solid rgba(77,184,232,.3);padding:5px 16px;border-radius:20px;cursor:pointer;transition:all .25s;white-space:nowrap}
+.nav-cta:hover{background:#1a3a8f;border-color:var(--primary)}
+
+.section-3d{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:92%;max-width:1000px;opacity:0;transition:opacity .6s,transform .6s;pointer-events:none;text-align:center;padding:30px 20px 100px 20px;max-height:85vh;overflow-y:auto;scrollbar-width:none}
+.section-3d::-webkit-scrollbar{display:none}
+.section-3d.active{opacity:1;pointer-events:auto;transform:translate(-50%,-50%) scale(1)}
+.section-3d.transitioning{opacity:0;transform:translate(-50%,-48%) scale(0.98)}
+.section-3d h1{font-family:var(--font-display);font-size:clamp(40px,10vw,90px);line-height:.9;letter-spacing:3px;text-shadow:0 4px 40px rgba(0,0,0,.5)}
+.section-3d h1 span{color:var(--primary)}
+.section-3d>p{font-size:clamp(14px,1.2vw,18px);font-weight:300;color:rgba(255,255,255,.5);max-width:600px;margin:12px auto 24px;line-height:1.8}
+.badge{display:inline-block;font-family:var(--font-heading);font-size:10px;font-weight:600;letter-spacing:3px;text-transform:uppercase;background:rgba(77,184,232,.1);border:1px solid rgba(77,184,232,.2);color:var(--primary);padding:4px 18px;border-radius:30px;margin-bottom:12px}
+.actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.btn-3d{font-family:var(--font-heading);font-size:13px;font-weight:600;letter-spacing:2px;text-transform:uppercase;background:rgba(255,255,255,.06);color:#fff;border:1px solid rgba(255,255,255,.12);padding:10px 28px;border-radius:30px;cursor:pointer;transition:all .25s;backdrop-filter:blur(8px)}
+.btn-3d:hover{background:rgba(255,255,255,.12);transform:scale(1.03)}
+.btn-primary-3d{font-family:var(--font-heading);font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;background:linear-gradient(135deg,#1a3a8f,#4db8e8);color:#fff;border:none;padding:10px 30px;border-radius:30px;cursor:pointer;transition:all .25s;box-shadow:0 4px 24px rgba(77,184,232,.2)}
+.btn-primary-3d:hover{transform:scale(1.03);box-shadow:0 8px 40px rgba(77,184,232,.3)}
+.grid-3d{display:grid;gap:14px;margin-top:20px;max-width:880px;margin-left:auto;margin-right:auto}
+.grid-3{grid-template-columns:repeat(3,1fr)}
+.grid-2{grid-template-columns:1fr 1fr}
+.grid-4{grid-template-columns:repeat(4,1fr)}
+.card-3d{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:20px 16px;transition:all .25s;backdrop-filter:blur(12px);cursor:pointer;text-align:left}
+.card-3d:hover{background:rgba(255,255,255,.08);border-color:rgba(77,184,232,.2);transform:translateY(-4px)}
+.card-3d .tag{display:inline-block;font-family:var(--font-heading);font-size:8px;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:2px 10px;border-radius:12px;margin-bottom:6px}
+.tag-blue{background:rgba(26,58,143,.3);color:var(--primary)}
+.tag-pink{background:rgba(198,0,126,.2);color:#e080c0}
+.tag-green{background:rgba(0,146,70,.2);color:#60d090}
+.card-3d h3{font-family:var(--font-display);font-size:20px;letter-spacing:1.5px}
+.card-3d h4{font-family:var(--font-heading);font-size:13px;font-weight:600;color:var(--primary)}
+.card-3d .desc{font-size:12px;font-weight:300;color:rgba(255,255,255,.5);line-height:1.7;margin-bottom:8px}
+.card-3d .meta{display:flex;gap:12px;font-family:var(--font-heading);font-size:11px;font-weight:500;color:rgba(255,255,255,.25);border-top:1px solid rgba(255,255,255,.05);padding-top:8px}
+.card-3d .avatar{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#1a3a8f,#4db8e8);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:18px}
+
+#ai-intercom{position:fixed;bottom:24px;right:24px;z-index:250;pointer-events:auto}
+.intercom-btn{width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#1a3a8f,#4db8e8);border:2px solid rgba(77,184,232,.5);color:#fff;font-size:24px;cursor:pointer;box-shadow:0 4px 24px rgba(77,184,232,.3),0 0 0 0 rgba(77,184,232,.5);animation:pulse-ring 2s infinite;transition:all .25s;display:flex;align-items:center;justify-content:center}
+.intercom-btn:hover{transform:scale(1.1)}
+.intercom-btn.active{background:#cc2233;border-color:#e08080;animation:none}
+@keyframes pulse-ring{0%{box-shadow:0 4px 24px rgba(77,184,232,.3),0 0 0 0 rgba(77,184,232,.5)}70%{box-shadow:0 4px 24px rgba(77,184,232,.3),0 0 0 15px rgba(77,184,232,0)}100%{box-shadow:0 4px 24px rgba(77,184,232,.3),0 0 0 0 rgba(77,184,232,0)}}
+#ai-chat-panel{position:fixed;bottom:96px;right:24px;width:380px;max-height:500px;background:rgba(8,14,30,.92);backdrop-filter:blur(30px);border:1px solid rgba(77,184,232,.2);border-radius:20px;box-shadow:0 20px 60px rgba(0,0,0,.7);display:flex;flex-direction:column;overflow:hidden;z-index:249;transform:translateY(20px) scale(0.95);opacity:0;pointer-events:none;transition:all .3s cubic-bezier(0.34,1.56,0.64,1)}
+#ai-chat-panel.open{transform:translateY(0) scale(1);opacity:1;pointer-events:auto}
+.ai-chat-header{background:rgba(26,58,143,.4);padding:14px 18px;display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(77,184,232,.15)}
+.ai-chat-header .ai-avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#1a3a8f,#4db8e8);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:16px}
+.ai-chat-header .ai-title{font-family:var(--font-heading);font-size:14px;font-weight:700;color:#fff}
+.ai-chat-header .ai-subtitle{font-family:var(--font-body);font-size:10px;color:rgba(255,255,255,.4)}
+.ai-chat-header .ai-close{background:none;border:none;color:rgba(255,255,255,.5);font-size:20px;cursor:pointer;margin-left:auto;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.ai-chat-header .ai-close:hover{background:rgba(255,255,255,.1);color:#fff}
+.ai-chat-messages{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px;max-height:320px;scrollbar-width:thin;scrollbar-color:rgba(77,184,232,.3) transparent}
+.ai-chat-messages::-webkit-scrollbar{width:4px}
+.ai-chat-messages::-webkit-scrollbar-thumb{background:rgba(77,184,232,.3);border-radius:2px}
+.ai-msg{display:flex;gap:8px;animation:fadeInUp .3s ease}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.ai-msg.bot .msg-bubble{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);color:rgba(255,255,255,.85);border-radius:4px 16px 16px 16px}
+.ai-msg.user .msg-bubble{background:rgba(26,58,143,.5);border:1px solid rgba(77,184,232,.3);color:#fff;border-radius:16px 4px 16px 16px;margin-left:auto}
+.msg-bubble{max-width:85%;padding:10px 14px;font-size:13px;line-height:1.5;font-family:var(--font-body)}
+.msg-bubble strong{color:var(--primary)}
+.msg-avatar{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#1a3a8f,#4db8e8);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:12px;flex-shrink:0}
+.ai-chat-input{padding:12px 16px;border-top:1px solid rgba(255,255,255,.06);display:flex;gap:8px}
+.ai-chat-input input{flex:1;padding:10px 14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:25px;color:#fff;font-family:var(--font-body);font-size:13px;outline:none;transition:all .15s}
+.ai-chat-input input:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(77,184,232,.15)}
+.ai-chat-input input::placeholder{color:rgba(255,255,255,.2)}
+.ai-send-btn{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#1a3a8f,#4db8e8);border:none;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0}
+.ai-send-btn:hover{transform:scale(1.05)}
+.ai-send-btn:disabled{opacity:0.4;cursor:not-allowed}
+.typing-indicator{display:flex;gap:4px;padding:8px 14px}
+.typing-indicator span{width:6px;height:6px;border-radius:50%;background:rgba(77,184,232,.5);animation:typing 1.4s infinite}
+.typing-indicator span:nth-child(2){animation-delay:.2s}
+.typing-indicator span:nth-child(3){animation-delay:.4s}
+@keyframes typing{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-6px)}}
+
+footer{position:fixed;bottom:0;left:0;right:0;z-index:50;padding:10px 20px 8px;background:rgba(4,8,26,.85);backdrop-filter:blur(16px);border-top:1px solid rgba(255,255,255,.06)}
+.footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:16px;max-width:1000px;margin:0 auto}
+.footer-grid h4{font-family:var(--font-heading);font-size:8px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.2);margin-bottom:4px}
+.footer-grid p{font-size:10px;color:rgba(255,255,255,.2);line-height:1.4}
+.footer-grid button{display:block;font-size:10px;color:rgba(255,255,255,.25);background:none;border:none;font-family:var(--font-body);text-align:left;padding:0;margin-bottom:2px;cursor:pointer;transition:color .2s}
+.footer-grid button:hover{color:rgba(255,255,255,.6)}
+.footer-bottom{max-width:1000px;margin:6px auto 0;padding-top:6px;border-top:1px solid rgba(255,255,255,.04);display:flex;justify-content:space-between;font-size:8px;color:rgba(255,255,255,.12)}
+.footer-bottom a{color:rgba(255,255,255,.2);text-decoration:none}
+.footer-bottom a:hover{color:rgba(77,184,232,.6)}
+
+.modal-backdrop{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(4,8,26,.8);backdrop-filter:blur(8px);z-index:200;opacity:0;visibility:hidden;transition:all .25s;display:flex;align-items:center;justify-content:center}
+.modal-backdrop.open{opacity:1;visibility:visible}
+.modal{background:rgba(15,22,45,.95);border:1px solid rgba(255,255,255,.1);border-radius:20px;padding:32px;max-width:500px;width:90%;position:relative;transform:scale(.9);transition:transform .35s cubic-bezier(0.34,1.56,0.64,1)}
+.modal-backdrop.open .modal{transform:scale(1)}
+.modal-close{position:absolute;top:16px;right:16px;background:none;border:none;color:rgba(255,255,255,.5);font-size:24px;cursor:pointer;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+.modal-close:hover{background:rgba(255,255,255,.1);color:#fff}
+.form-group{margin-bottom:16px;text-align:left}
+.form-label{display:block;font-family:var(--font-heading);font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.25);margin-bottom:4px}
+.form-input,.form-textarea,.form-select{width:100%;padding:12px 16px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:14px;color:#fff;font-family:var(--font-body);font-size:14px;transition:all .15s;outline:none}
+.form-input:focus,.form-textarea:focus,.form-select:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(77,184,232,.2)}
+.form-select option{background:#0f1629}
+.form-textarea{min-height:100px;resize:vertical}
+
+@media(max-width:768px){
+  nav{padding:4px 10px;top:10px}.nav-logo{font-size:14px}.nav-btn{font-size:10px;padding:4px 8px}.nav-cta{font-size:10px;padding:4px 10px}
+  .section-3d{padding:14px 12px 100px 12px;width:96%;top:52%;max-height:80vh}.grid-3d{grid-template-columns:1fr;max-width:400px}.grid-4{grid-template-columns:1fr 1fr}.grid-2{grid-template-columns:1fr}
+  .actions{flex-direction:column;align-items:center}.btn-3d,.btn-primary-3d{width:100%;max-width:260px;text-align:center}
+  .footer-grid{grid-template-columns:1fr 1fr;gap:10px}.footer-bottom{flex-direction:column;gap:4px;text-align:center}
+  #hud{bottom:90px;gap:10px}.hud-item{padding:6px 10px;min-width:60px}.hud-value{font-size:16px}
+  #ai-chat-panel{width:calc(100vw - 32px);right:16px}
+}
+</style>
+</head>
+<body>
+
+<a href="#main-content" style="position:fixed;top:-100%;left:16px;z-index:101;background:var(--primary);color:var(--bg);padding:8px 16px;border-radius:50px;font-weight:700;text-decoration:none">Salta al contenuto</a>
+
+<div id="preloader">
+  <div class="preloader-icon"></div>
+  <p class="preloader-text">URBE AERO</p>
+  <p class="preloader-sub">CARICAMENTO DA40 · LIRU</p>
+</div>
+
+<div id="toast-container"></div>
+
+<div id="hud">
+  <div class="hud-item"><div class="hud-label">SPEED</div><div class="hud-value" id="hud-speed">0<span class="hud-unit">kt</span></div></div>
+  <div class="hud-item"><div class="hud-label">ALT</div><div class="hud-value" id="hud-alt">0<span class="hud-unit">ft</span></div></div>
+  <div class="hud-item"><div class="hud-label">V/S</div><div class="hud-value" id="hud-vs">0<span class="hud-unit">fpm</span></div></div>
+  <div class="hud-item"><div class="hud-label">HDG</div><div class="hud-value" id="hud-hdg">340<span class="hud-unit">°</span></div></div>
+</div>
+
+<div id="ai-intercom">
+  <button class="intercom-btn" id="intercom-toggle" onclick="toggleAI()" title="AI Flight Assistant">🎙</button>
+</div>
+<div id="ai-chat-panel">
+  <div class="ai-chat-header">
+    <div class="ai-avatar">AI</div>
+    <div><div class="ai-title">URBE ATC Assistant</div><div class="ai-subtitle">AI · Online</div></div>
+    <button class="ai-close" onclick="toggleAI()">×</button>
+  </div>
+  <div class="ai-chat-messages" id="ai-messages">
+    <div class="ai-msg bot">
+      <div class="msg-avatar">AI</div>
+      <div class="msg-bubble"><strong>Urbe ATC Assistant ready.</strong><br>Posso aiutarti con info su corsi, flotta, requisiti EASA, open day. Ask me anything! ✈</div>
+    </div>
+  </div>
+  <div class="ai-chat-input">
+    <input type="text" id="ai-input" placeholder="Chiedi info su corsi, flotta, licenze..." onkeypress="if(event.key==='Enter')sendAI()">
+    <button class="ai-send-btn" onclick="sendAI()" id="ai-send-btn">➤</button>
+  </div>
+</div>
+
+<canvas id="threeCanvas"></canvas>
+
+<div id="ui">
+  <nav>
+    <button class="nav-logo" onclick="showSection('home')">✈ URBE</button>
+    <button class="nav-btn active" onclick="showSection('home')" data-section="home">Home</button>
+    <button class="nav-btn" onclick="showSection('corsi')" data-section="corsi">Corsi</button>
+    <button class="nav-btn" onclick="showSection('flotta')" data-section="flotta">Flotta</button>
+    <button class="nav-btn" onclick="showSection('team')" data-section="team">Team</button>
+    <button class="nav-btn" onclick="showSection('contatti')" data-section="contatti">Contatti</button>
+    <button class="nav-cta" onclick="showSection('contatti')">Iscriviti</button>
+  </nav>
+
+  <main id="main-content">
+    <section class="section-3d active" id="section-home">
+      <div class="badge">🛫 Pista 34 · Roma Urbe LIRU · 41.95°N 12.50°E</div>
+      <h1>WE MAKE<br><span>YOU FLY</span></h1>
+      <p>EASA Approved. Diamond Fleet. 1.200+ piloti formati. La tua carriera inizia qui.</p>
+      <div class="actions">
+        <button class="btn-primary-3d" onclick="showSection('contatti')">Start Your Pilot Journey</button>
+        <button class="btn-3d" onclick="showSection('corsi')">Scopri i Corsi</button>
+      </div>
+    </section>
+
+    <section class="section-3d" id="section-corsi">
+      <div class="badge">🛫 Decollo · Salita iniziale · 500 ft</div>
+      <h1>CORSI DI<br><span>ECCELLENZA</span></h1>
+      <p>Tre percorsi certificati EASA.</p>
+      <div class="grid-3d grid-3">
+        <div class="card-3d"><div class="tag tag-blue">ATPL Frozen</div><h3>Airline Transport Pilot Licence</h3><div class="desc">Da zero al frozen ATPL. DA20/DA40/DA42.</div><div class="meta"><span>📅 24 mesi</span><span>✈ 200+ ore</span></div></div>
+        <div class="card-3d"><div class="tag tag-pink">Cadet Program</div><h3>Wizz Air Cadet</h3><div class="desc">Programma ufficiale Wizz Air.</div><div class="meta"><span>📅 18 mesi</span><span>✈ 250+ ore</span></div></div>
+        <div class="card-3d"><div class="tag tag-green">MPL</div><h3>ITA Airways MPL</h3><div class="desc">CRM-first. First Officer garantito.</div><div class="meta"><span>📅 36 mesi</span><span>✈ A320/A330</span></div></div>
+      </div>
+    </section>
+
+    <section class="section-3d" id="section-flotta">
+      <div class="badge">🔄 Downwind · Livello circuito · 1000 ft</div>
+      <h1>FLOTTA &amp;<br><span>SIMULATORI</span></h1>
+      <p>18 Diamond. Simulatori Level D.</p>
+      <div class="grid-3d grid-3">
+        <div class="card-3d"><h3>Diamond DA20</h3><div class="desc">Trainer Base · 180 km/h</div></div>
+        <div class="card-3d"><h3>Diamond DA40 NG</h3><div class="desc">Trainer IFR · 265 km/h</div></div>
+        <div class="card-3d"><h3>Diamond DA42 NG</h3><div class="desc">Multi-Engine · 336 km/h</div></div>
+      </div>
+    </section>
+
+    <section class="section-3d" id="section-team">
+      <div class="badge">↗ Base Leg · 800 ft</div>
+      <h1>TEAM &amp;<br><span>STORIE</span></h1>
+      <p>Istruttori d'élite.</p>
+      <div class="grid-3d grid-4">
+        <div class="card-3d"><div class="avatar">MR</div><h3>Marco Rossi</h3><h4>Head of Training</h4></div>
+        <div class="card-3d"><div class="avatar">SB</div><h3>Sarah Bianchi</h3><h4>Chief Instructor</h4></div>
+        <div class="card-3d"><div class="avatar">LV</div><h3>Luca Verdi</h3><h4>ME Specialist</h4></div>
+        <div class="card-3d"><div class="avatar">AN</div><h3>Anna Neri</h3><h4>Sim Instructor</h4></div>
+      </div>
+    </section>
+
+    <section class="section-3d" id="section-contatti">
+      <div class="badge">🛬 Finale · Pista 34</div>
+      <h1>PRONTO A<br><span>VOLARE?</span></h1>
+      <p>Ora tocca a te.</p>
+      <div class="grid-3d grid-2" style="max-width:600px">
+        <div class="card-3d"><h3>📞 Chiamaci</h3><div class="desc" style="color:#4db8e8;font-size:18px;font-weight:700">+39 06 123 4567</div></div>
+        <div class="card-3d"><h3>✉ Email</h3><div class="desc" style="color:#4db8e8">info@urbeaero.it</div></div>
+        <div class="card-3d"><h3>📍 Dove siamo</h3><div class="desc">Aeroporto Roma Urbe<br>Via dell'Aeroporto, 00188 Roma</div></div>
+        <div class="card-3d"><h3>📅 Open Day</h3><div class="desc">Ogni primo sabato del mese</div></div>
+      </div>
+      <div class="actions" style="margin-top:12px">
+        <button class="btn-primary-3d" onclick="openContactForm()">Richiedi Informazioni</button>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="footer-grid">
+      <div><h4>Urbe Aero Flight Academy</h4><p>EASA Approved. Roma Urbe Airport since 2008.</p></div>
+      <div><h4>Corsi</h4><button onclick="showSection('corsi')">ATPL Frozen</button><button onclick="showSection('corsi')">Cadet Wizz Air</button><button onclick="showSection('corsi')">MPL ITA Airways</button></div>
+      <div><h4>Accademia</h4><button onclick="showSection('flotta')">La Flotta</button><button onclick="showSection('flotta')">Simulatori</button><button onclick="showSection('team')">Istruttori</button></div>
+      <div><h4>Info</h4><button onclick="showSection('contatti')">Contatti</button><button onclick="openContactForm()">Open Day</button><button onclick="showToast('Privacy Policy','info')">Privacy</button></div>
+    </div>
+    <div class="footer-bottom">
+      <span>&copy; 2026 Urbe Aero Flight Academy · EASA ATO · ENAC · Roma</span>
+      <span>3D Model: <a href="https://sketchfab.com/3d-models/diamond-da40-dfda5fad07c24c12be13a23562fe83e3" target="_blank" rel="noopener">Diamond Da40</a> by <a href="https://sketchfab.com/helijah" target="_blank" rel="noopener">helijah</a> · <a href="http://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC-BY 4.0</a></span>
+    </div>
+  </footer>
+</div>
+
+<div class="modal-backdrop" id="contact-modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeContactForm()">&times;</button>
+    <h2 style="font-family:var(--font-display);font-size:28px;margin-bottom:20px">Richiedi <span style="color:var(--primary)">Informazioni</span></h2>
+    <form id="contact-form" onsubmit="handleSubmit(event)" novalidate>
+      <div class="form-group"><label class="form-label">Nome *</label><input type="text" id="f-name" class="form-input" placeholder="Il tuo nome" required autocomplete="name"></div>
+      <div class="form-group"><label class="form-label">Email *</label><input type="email" id="f-email" class="form-input" placeholder="email@esempio.com" required autocomplete="email"></div>
+      <div class="form-group"><label class="form-label">Corso</label><select id="f-course" class="form-select"><option value="">Seleziona...</option><option>ATPL Frozen</option><option>Wizz Air Cadet</option><option>MPL ITA Airways</option></select></div>
+      <div class="form-group"><label class="form-label">Messaggio</label><textarea id="f-message" class="form-textarea" placeholder="Il tuo sogno di volare..." rows="4"></textarea></div>
+      <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:24px">
+        <button type="button" class="btn-3d" onclick="closeContactForm()">Annulla</button>
+        <button type="submit" class="btn-primary-3d" id="submit-btn">Invia Richiesta</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+
+<script>
+// ============================================================
+// URBE AERO — DA40 REALE + AEROPORTO LIRU PROCEDURALE
+// Modello: "Diamond Da40" by helijah (CC-BY 4.0)
+// https://sketchfab.com/3d-models/diamond-da40-dfda5fad07c24c12be13a23562fe83e3
+// ============================================================
+
+// ---- GLB EMBEDDED ----
+const DA40_GLB_URL = "https://gabrielemartindj-bit.github.io/urbe-aero-assets/da40.glb";
+
+// ---- STATI GLOBALI ----
+var scene, camera, renderer, airplane, propGroup, cloudGroup, groundGroup;
+var targetFlightState = {x:0,y:0.5,z:-8,rx:0,ry:0,rz:0};
+var currentFlightState = {x:0,y:0.5,z:-8,rx:0,ry:0,rz:0};
+var camTarget = {x:0,y:3,z:10}, camCurrent = {x:0,y:3,z:10};
+var isDragging=false, prevMouse={x:0,y:0}, dragRotY=0, dragRotX=0;
+var time=0, flightPhase='home', flightProgress=1, currentSection='home', isTransitioning=false;
+var flightData = {speed:0,altitude:0,vs:0,heading:340};
+var audioCtx=null, engineNode, engineGain, windGain;
+var sideMultiplier=1;
+
+// ---- PRELOADER ----
+function hidePreloader(){document.getElementById('preloader').classList.add('hidden');}
+setTimeout(hidePreloader,12000);
+
+// ---- TOAST ----
+function showToast(msg,type,dur){
+  type=type||'info'; dur=dur||4000;
+  var c=document.getElementById('toast-container');
+  var t=document.createElement('div');
+  t.className='toast '+type; t.textContent=msg;
+  t.onclick=function(){removeToast(t);};
+  c.appendChild(t);
+  setTimeout(function(){removeToast(t);},dur);
+}
+function removeToast(t){
+  if(!t.classList.contains('removing')){
+    t.classList.add('removing');
+    setTimeout(function(){t.remove();},250);
+  }
+}
+
+// ---- MODAL ----
+function openContactForm(){
+  document.getElementById('contact-modal').classList.add('open');
+  setTimeout(function(){document.getElementById('f-name').focus();},100);
+}
+function closeContactForm(){
+  document.getElementById('contact-modal').classList.remove('open');
+  document.getElementById('contact-form').reset();
+}
+document.getElementById('contact-modal').addEventListener('click',function(e){
+  if(e.target===document.getElementById('contact-modal'))closeContactForm();
+});
+function handleSubmit(e){
+  e.preventDefault();
+  var name=document.getElementById('f-name').value.trim();
+  var email=document.getElementById('f-email').value.trim();
+  if(name&&email.includes('@')){
+    var btn=document.getElementById('submit-btn');
+    btn.textContent='Invio...'; btn.disabled=true;
+    setTimeout(function(){
+      closeContactForm();
+      showToast('✅ Richiesta inviata!','success');
+      btn.textContent='Invia Richiesta'; btn.disabled=false;
+    },1500);
+  } else {
+    showToast('⚠ Completa nome e email','error',3000);
+  }
+}
+
+// ---- AI ----
+var aiOpen=false, conversationHistory=[];
+var URBE_CONTEXT="Sei URBE ATC Assistant di Urbe Aero Flight Academy. Roma Urbe (LIRU). EASA Approved dal 2008, flotta Diamond 18 aerei (DA20,DA40 NG,DA42 NG). Corsi: ATPL Frozen 24 mesi 200+ ore, Wizz Air Cadet 18 mesi 250+ ore, MPL ITA Airways 36 mesi 240+ ore. 1200+ piloti formati. Open day primo sabato del mese. Tel: +39 06 123 4567. Rispondi in italiano, 2-4 frasi.";
+
+function toggleAI(){
+  aiOpen=!aiOpen;
+  document.getElementById('ai-chat-panel').classList.toggle('open',aiOpen);
+  document.getElementById('intercom-toggle').classList.toggle('active',aiOpen);
+  if(aiOpen){
+    document.getElementById('ai-input').focus();
+    if(conversationHistory.length===0)conversationHistory.push({role:'system',content:URBE_CONTEXT});
+  }
+}
+function addMessage(role,text){
+  var c=document.getElementById('ai-messages');
+  var d=document.createElement('div');
+  d.className='ai-msg '+(role==='user'?'user':'bot');
+  var av=role==='user'?'':'<div class="msg-avatar">AI</div>';
+  d.innerHTML=av+'<div class="msg-bubble">'+text+'</div>';
+  c.appendChild(d); c.scrollTop=c.scrollHeight;
+}
+function showTyping(){
+  var c=document.getElementById('ai-messages');
+  var d=document.createElement('div');
+  d.className='ai-msg bot'; d.id='typing-indicator';
+  d.innerHTML='<div class="msg-avatar">AI</div><div class="msg-bubble"><div class="typing-indicator"><span></span><span></span><span></span></div></div>';
+  c.appendChild(d); c.scrollTop=c.scrollHeight;
+}
+function hideTyping(){var el=document.getElementById('typing-indicator');if(el)el.remove();}
+async function sendAI(){
+  var input=document.getElementById('ai-input');
+  var btn=document.getElementById('ai-send-btn');
+  var text=input.value.trim(); if(!text)return;
+  addMessage('user',text);
+  conversationHistory.push({role:'user',content:text});
+  input.value=''; btn.disabled=true; showTyping();
+  var reply=simulateAI(text);
+  await new Promise(r=>setTimeout(r,600+Math.random()*400));
+  hideTyping(); addMessage('bot',reply);
+  conversationHistory.push({role:'assistant',content:reply});
+  btn.disabled=false; document.getElementById('ai-input').focus();
+}
+function simulateAI(q){
+  q=q.toLowerCase();
+  if(q.includes('atpl'))return '<strong>ATPL Frozen</strong> — 24 mesi, 200+ ore su DA20/DA40/DA42. Include teoria EASA e MCC/JOC. ✈';
+  if(q.includes('wizz'))return '<strong>Wizz Air Cadet</strong> — 18 mesi, 250+ ore. Garanzia colloquio diretto A320!';
+  if(q.includes('mpl')||q.includes('ita'))return '<strong>MPL ITA Airways</strong> — 36 mesi, 240+ ore. CRM-first. First Officer garantito su A320/A330.';
+  if(q.includes('costo')||q.includes('prezzo'))return 'ATPL da €65.000, Wizz Air da €55.000, MPL da €80.000. Finanziamenti disponibili.';
+  if(q.includes('requisit')||q.includes('età'))return 'Età minima 17 anni, diploma, certificato medico classe 1, inglese ICAO Level 4.';
+  if(q.includes('open day'))return 'Open day ogni primo sabato del mese. Visita flotta e simulatore A320. Prenotazione obbligatoria!';
+  if(q.includes('flotta')||q.includes('aereo')||q.includes('da40'))return '18 Diamond: DA20 (180 km/h), DA40 NG (265 km/h, G1000 NXi), DA42 NG (336 km/h, FIKI).';
+  if(q.includes('dove')||q.includes('aeroporto'))return 'Aeroporto Roma Urbe (LIRU), Via dell\'Aeroporto 00188 Roma. Pista 34/16.';
+  if(q.includes('ciao')||q.includes('salve')||q.includes('hello'))return 'Ciao! ✈ Sono URBE ATC Assistant. Chiedimi info su corsi, flotta, open day!';
+  return 'Posso aiutarti con: corsi EASA, flotta Diamond, requisiti, costi, open day. Cosa ti interessa? ✈';
+}
+
+// ---- AUDIO ----
+function initAudio(){
+  try{
+    audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+    engineNode=audioCtx.createOscillator();
+    engineNode.type='sawtooth'; engineNode.frequency.value=80;
+    var filter=audioCtx.createBiquadFilter();
+    filter.type='lowpass'; filter.frequency.value=300;
+    engineGain=audioCtx.createGain(); engineGain.gain.value=0.02;
+    engineNode.connect(filter); filter.connect(engineGain); engineGain.connect(audioCtx.destination);
+    engineNode.start();
+    var bufSize=4096;
+    var windNode=audioCtx.createScriptProcessor(bufSize,1,1);
+    windGain=audioCtx.createGain(); windGain.gain.value=0.01;
+    windNode.onaudioprocess=function(e){
+      var out=e.outputBuffer.getChannelData(0);
+      for(var i=0;i<bufSize;i++)out[i]=(Math.random()*2-1)*0.1;
+    };
+    windNode.connect(windGain); windGain.connect(audioCtx.destination);
+  }catch(e){}
+}
+function updateAudio(speed){
+  if(!audioCtx)return;
+  engineNode.frequency.setTargetAtTime(60+speed*0.5,audioCtx.currentTime,0.1);
+  engineGain.gain.setTargetAtTime(0.015+speed*0.0003,audioCtx.currentTime,0.1);
+  windGain.gain.setTargetAtTime(0.005+speed*0.0002,audioCtx.currentTime,0.1);
+}
+
+// ---- LIRU AIRPORT TEXTURE (procedural canvas) ----
+function createLIRUTexture(){
+  // Faithful recreation of Roma Urbe LIRU layout
+  // Based on: LIRU 41°57'N 12°29'E, RWY 34/16 ~1300m, oriented ~340°
+  var SIZE=2048;
+  var c=document.createElement('canvas');
+  c.width=SIZE; c.height=SIZE;
+  var ctx=c.getContext('2d');
+
+  // --- Background: Italian countryside greens ---
+  var grad=ctx.createLinearGradient(0,0,SIZE,SIZE);
+  grad.addColorStop(0,'#4a6741');
+  grad.addColorStop(0.3,'#5a7a50');
+  grad.addColorStop(0.6,'#4e7044');
+  grad.addColorStop(1,'#3d5e35');
+  ctx.fillStyle=grad; ctx.fillRect(0,0,SIZE,SIZE);
+
+  // Texture naturale erba con variazioni
+  ctx.save();
+  for(var i=0;i<800;i++){
+    var x=Math.random()*SIZE, y=Math.random()*SIZE;
+    var r=3+Math.random()*12;
+    var alpha=0.03+Math.random()*0.06;
+    var shade=Math.random()>0.5?'rgba(30,50,20,'+alpha+')':'rgba(80,120,50,'+alpha+')';
+    ctx.fillStyle=shade;
+    ctx.beginPath(); ctx.ellipse(x,y,r*2,r,Math.random()*Math.PI,0,Math.PI*2);
+    ctx.fill();
+  }
+  ctx.restore();
+
+  // --- Strade/taxiway perimetrale ---
+  ctx.save();
+  ctx.strokeStyle='#555555'; ctx.lineWidth=6;
+  ctx.setLineDash([]);
+  // Perimeter road east side
+  ctx.beginPath();
+  ctx.moveTo(1350,100); ctx.lineTo(1380,400); ctx.lineTo(1400,900); ctx.lineTo(1360,1600); ctx.lineTo(1200,1900);
+  ctx.stroke();
+  ctx.restore();
+
+  // --- APRON (piazzale) a est della pista ---
+  ctx.save();
+  ctx.fillStyle='#484848';
+  ctx.beginPath();
+  ctx.roundRect(950,500,300,600,8);
+  ctx.fill();
+  // Linee sosta apron
+  ctx.strokeStyle='#ffcc00'; ctx.lineWidth=2;
+  for(var i=0;i<5;i++){
+    ctx.beginPath();
+    ctx.moveTo(960,540+i*100); ctx.lineTo(1240,540+i*100);
+    ctx.stroke();
+  }
+  // Taxiway connessione apron-pista
+  ctx.fillStyle='#484848';
+  ctx.fillRect(800,700,170,60);
+  ctx.fillRect(800,900,170,60);
+  ctx.restore();
+
+  // --- HANGARS (rettangoli grigi/blu a nord-est) ---
+  var hangars=[
+    {x:1050,y:200,w:160,h:90,col:'#666'},
+    {x:1050,y:300,w:160,h:90,col:'#5a5a5a'},
+    {x:1230,y:200,w:120,h:80,col:'#607060'},
+    {x:1230,y:290,w:120,h:80,col:'#555a55'},
+    {x:1060,y:400,w:140,h:70,col:'#5e5e5e'},
+  ];
+  hangars.forEach(function(h){
+    ctx.save();
+    ctx.fillStyle=h.col; ctx.fillRect(h.x,h.y,h.w,h.h);
+    ctx.strokeStyle='rgba(0,0,0,0.4)'; ctx.lineWidth=2;
+    ctx.strokeRect(h.x,h.y,h.w,h.h);
+    // Tetto hangar
+    ctx.fillStyle='rgba(0,0,0,0.15)';
+    ctx.fillRect(h.x,h.y,h.w,8);
+    ctx.restore();
+  });
+
+  // --- TORRE CONTROLLO ---
+  ctx.save();
+  ctx.fillStyle='#c8c8b0';
+  ctx.fillRect(1200,720,28,50);
+  ctx.fillStyle='#a0a090';
+  ctx.fillRect(1195,716,38,12); // testa torre
+  ctx.fillStyle='rgba(100,200,255,0.5)';
+  ctx.fillRect(1198,718,32,8); // vetri
+  ctx.restore();
+
+  // --- EDIFICIO TERMINALE ---
+  ctx.save();
+  ctx.fillStyle='#d0cfc0';
+  ctx.fillRect(1060,730,120,65);
+  ctx.strokeStyle='#aaa9a0'; ctx.lineWidth=1.5;
+  ctx.strokeRect(1060,730,120,65);
+  // Finestre
+  ctx.fillStyle='rgba(180,220,255,0.4)';
+  for(var i=0;i<4;i++) ctx.fillRect(1070+i*26,740,18,12);
+  ctx.restore();
+
+  // --- PARCHEGGIO AUTO ---
+  ctx.save();
+  ctx.fillStyle='#525252';
+  ctx.fillRect(1060,820,200,100);
+  ctx.strokeStyle='#ffff00'; ctx.lineWidth=1;
+  for(var i=0;i<8;i++){
+    ctx.beginPath();
+    ctx.moveTo(1085+i*22,822); ctx.lineTo(1085+i*22,918);
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  // ---- PISTA PRINCIPALE 34/16 ----
+  // Orientamento ~340° (NNW), centrata leggermente a sinistra
+  ctx.save();
+  ctx.translate(SIZE/2-80, SIZE/2);
+  ctx.rotate(-20*Math.PI/180); // 340° = -20° da nord = rotazione canvas
+
+  var rwLen=820, rwW=52;
+
+  // Fondale asfalto scuro
+  ctx.fillStyle='#2a2a2a';
+  ctx.fillRect(-rwW/2-4,-rwLen/2-4,rwW+8,rwLen+8);
+
+  // Superficie pista
+  var rwGrad=ctx.createLinearGradient(-rwW/2,0,rwW/2,0);
+  rwGrad.addColorStop(0,'#363636');
+  rwGrad.addColorStop(0.15,'#3a3a3a');
+  rwGrad.addColorStop(0.5,'#404040');
+  rwGrad.addColorStop(0.85,'#3a3a3a');
+  rwGrad.addColorStop(1,'#363636');
+  ctx.fillStyle=rwGrad;
+  ctx.fillRect(-rwW/2,-rwLen/2,rwW,rwLen);
+
+  // Segni bordo pista (strisce bianche laterali)
+  ctx.fillStyle='rgba(255,255,255,0.7)';
+  ctx.fillRect(-rwW/2,-rwLen/2,3,rwLen);
+  ctx.fillRect(rwW/2-3,-rwLen/2,3,rwLen);
+
+  // Centerline tratteggiata
+  ctx.strokeStyle='rgba(255,255,255,0.85)';
+  ctx.lineWidth=2.5;
+  ctx.setLineDash([28,18]);
+  ctx.beginPath();
+  ctx.moveTo(0,-rwLen/2+40); ctx.lineTo(0,rwLen/2-40);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Threshold stripes (34 = nord)
+  ctx.fillStyle='rgba(255,255,255,0.9)';
+  for(var i=-2;i<=2;i++){
+    if(i===0)continue;
+    ctx.fillRect(i*10-3,-rwLen/2+15,6,30);
+  }
+  // Threshold stripes (16 = sud)
+  for(var i=-2;i<=2;i++){
+    if(i===0)continue;
+    ctx.fillRect(i*10-3,rwLen/2-45,6,30);
+  }
+
+  // Touchdown zone markers
+  ctx.fillStyle='rgba(255,255,255,0.7)';
+  for(var s=-1;s<=1;s+=2){
+    for(var t=1;t<=3;t++){
+      ctx.fillRect(s*(rwW/2-16)-5,-rwLen/2+60+t*40,10,18);
+      ctx.fillRect(s*(rwW/2-16)-5,rwLen/2-60-t*40,10,18);
+    }
+  }
+
+  // Piano inclinato avvicinamento (PAPI) - piccoli blocchi colorati
+  ctx.fillStyle='#ff3300';
+  ctx.fillRect(-rwW/2-18,-rwLen/2+80,8,8);
+  ctx.fillStyle='#ffffff';
+  ctx.fillRect(-rwW/2-18,-rwLen/2+90,8,8);
+
+  // Numeri di pista (34 e 16)
+  ctx.fillStyle='rgba(255,255,255,0.92)';
+  ctx.font='bold 28px Arial';
+  ctx.textAlign='center';
+  ctx.save();
+  ctx.translate(0,-rwLen/2+80);
+  ctx.fillText('34',0,0);
+  ctx.restore();
+  ctx.save();
+  ctx.translate(0,rwLen/2-80);
+  ctx.rotate(Math.PI);
+  ctx.fillText('16',0,0);
+  ctx.restore();
+
+  // Displaced threshold arrows (34)
+  ctx.fillStyle='rgba(255,255,255,0.6)';
+  ctx.font='18px Arial';
+  ctx.fillText('▲',0,-rwLen/2+110);
+  ctx.fillText('▼',0,rwLen/2-110);
+
+  ctx.restore(); // fine pista
+
+  // --- TAXIWAY ALPHA (connessione principale) ---
+  ctx.save();
+  ctx.fillStyle='#3d3d3d';
+  // TWY A nord
+  ctx.translate(SIZE/2-80,SIZE/2);
+  ctx.rotate(-20*Math.PI/180);
+  ctx.fillRect(rwW/2-1,-250,180,38);
+  ctx.fillRect(rwW/2-1,100,180,38);
+  ctx.setLineDash([8,6]);
+  ctx.strokeStyle='rgba(255,200,0,0.6)'; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.moveTo(rwW/2+90,-250); ctx.lineTo(rwW/2+90,-212); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(rwW/2+90,100); ctx.lineTo(rwW/2+90,138); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.restore();
+
+  // --- WIND SOCK / MANICA A VENTO ---
+  ctx.save();
+  ctx.translate(550,350);
+  ctx.fillStyle='#cc0000';
+  ctx.fillRect(-2,-30,4,30);
+  ctx.fillStyle='#ff6600';
+  ctx.beginPath();
+  ctx.moveTo(-2,-30); ctx.lineTo(12,-26); ctx.lineTo(10,-15); ctx.lineTo(-2,-15);
+  ctx.fill();
+  ctx.fillStyle='#ffffff';
+  ctx.beginPath();
+  ctx.moveTo(-2,-15); ctx.lineTo(12,-11); ctx.lineTo(10,0); ctx.lineTo(-2,0);
+  ctx.fill();
+  ctx.restore();
+
+  // --- Piccoli aerei parcheggiati sull'apron ---
+  function drawParkedAC(cx,cy,rot){
+    ctx.save();
+    ctx.translate(cx,cy); ctx.rotate(rot);
+    ctx.fillStyle='#e8e8f0';
+    ctx.fillRect(-4,-12,8,24); // fusoliera
+    ctx.fillRect(-18,-2,36,5); // ali
+    ctx.fillRect(-7,10,14,4);  // stabilizzatore
+    ctx.fillStyle='#bbbbcc';
+    ctx.fillRect(-3,-14,6,4);  // muso
+    ctx.restore();
+  }
+  drawParkedAC(1000,550,0.3);
+  drawParkedAC(1000,640,0.1);
+  drawParkedAC(1000,730,-0.2);
+  drawParkedAC(1050,560,0.15);
+  drawParkedAC(1050,650,0.0);
+
+  // --- Ombre edifici (senso luce da NW) ---
+  ctx.save();
+  ctx.fillStyle='rgba(0,0,0,0.18)';
+  hangars.forEach(function(h){
+    ctx.fillRect(h.x+8,h.y+h.h,h.w,10);
+  });
+  ctx.restore();
+
+  // --- Vignette bordi (effetto fotografico aereo) ---
+  var vign=ctx.createRadialGradient(SIZE/2,SIZE/2,SIZE*0.3,SIZE/2,SIZE/2,SIZE*0.75);
+  vign.addColorStop(0,'rgba(0,0,0,0)');
+  vign.addColorStop(1,'rgba(0,0,0,0.35)');
+  ctx.fillStyle=vign;
+  ctx.fillRect(0,0,SIZE,SIZE);
+
+  var tex=new THREE.CanvasTexture(c);
+  tex.encoding=THREE.sRGBEncoding;
+  return tex;
+}
+
+// ---- GLB LOADER da URL ----
+function loadDA40fromBase64(){
+  return new Promise(function(resolve){
+    var loader = new THREE.GLTFLoader();
+    loader.crossOrigin = 'anonymous';
+    // Show loading progress
+    var toastShown = false;
+    loader.load(
+      DA40_GLB_URL,
+      function(gltf){
+        var model = gltf.scene;
+        model.rotation.y = Math.PI;
+
+        var box = new THREE.Box3().setFromObject(model);
+        var size = box.getSize(new THREE.Vector3());
+        var maxDim = Math.max(size.x, size.y, size.z);
+        var scale = 5.5 / maxDim;
+        model.scale.setScalar(scale);
+
+        box.setFromObject(model);
+        var center = box.getCenter(new THREE.Vector3());
+        model.position.sub(center);
+
+        model.traverse(function(child){
+          if(child.isMesh){
+            child.castShadow = true;
+            child.receiveShadow = false;
+            if(child.material) child.material.envMapIntensity = 0.8;
+          }
+        });
+
+        propGroup = null;
+        model.traverse(function(child){
+          if(child.name && (child.name.toLowerCase().includes('prop') || child.name.toLowerCase().includes('helice'))){
+            propGroup = child;
+          }
+        });
+
+        var wrapper = new THREE.Group();
+        wrapper.add(model);
+        wrapper.position.set(0, 0.5, -8);
+
+        console.log('✅ DA40 caricato! Scale:', scale.toFixed(3));
+        showToast('✅ Diamond DA40 caricato', 'success', 2000);
+        resolve(wrapper);
+      },
+      function(progress){
+        if(progress.total > 0){
+          var pct = Math.round(progress.loaded / progress.total * 100);
+          var sub = document.querySelector('.preloader-sub');
+          if(sub) sub.textContent = 'CARICAMENTO DA40 · ' + pct + '%';
+          if(pct > 10 && !toastShown){ toastShown = true; }
+        }
+      },
+      function(err){
+        console.error('GLB load error:', err);
+        showToast('⚠ Uso modello geometrico', 'info', 2000);
+        resolve(createFallbackDA40());
+      }
+    );
+  });
+}
+
+// ---- MODELLO FALLBACK ----
+function createFallbackDA40(){
+  var ac=new THREE.Group();
+  var fusMat=new THREE.MeshStandardMaterial({color:0xf0f4ff,metalness:0.15,roughness:0.25});
+  var wingMat=new THREE.MeshStandardMaterial({color:0xe0e8f0,metalness:0.2,roughness:0.2});
+  var darkMat=new THREE.MeshStandardMaterial({color:0x2a2a3a,metalness:0.7,roughness:0.2});
+  var blueMat=new THREE.MeshStandardMaterial({color:0x1a3a8f,metalness:0.3,roughness:0.4});
+
+  // Fusoliera
+  var body=new THREE.Mesh(new THREE.CylinderGeometry(0.50,0.25,2.8,32),fusMat);
+  body.rotation.x=Math.PI/2; body.position.y=0.1; body.castShadow=true; ac.add(body);
+
+  // Ali
+  var wingGeo=new THREE.BoxGeometry(5.2,0.06,0.9);
+  var wings=new THREE.Mesh(wingGeo,wingMat);
+  wings.position.set(0,0.08,0.2); wings.castShadow=true; ac.add(wings);
+
+  // T-tail verticale
+  var vtail=new THREE.Mesh(new THREE.BoxGeometry(0.06,0.7,0.5),wingMat);
+  vtail.position.set(0,0.55,-1.3); ac.add(vtail);
+  // T-tail orizzontale
+  var htail=new THREE.Mesh(new THREE.BoxGeometry(1.8,0.05,0.4),wingMat);
+  htail.position.set(0,0.9,-1.3); ac.add(htail);
+
+  // Motore
+  var eng=new THREE.Mesh(new THREE.CylinderGeometry(0.24,0.20,0.20,16),darkMat);
+  eng.rotation.x=Math.PI/2; eng.position.set(0,0.1,1.48); ac.add(eng);
+
+  propGroup=new THREE.Group();
+  var propMat=new THREE.MeshStandardMaterial({color:0x888899,metalness:0.6,roughness:0.2});
+  for(var i=0;i<3;i++){
+    var blade=new THREE.Mesh(new THREE.BoxGeometry(0.035,0.75,0.045),propMat);
+    blade.rotation.z=(i/3)*Math.PI*2;
+    propGroup.add(blade);
+  }
+  propGroup.position.set(0,0.1,1.68); ac.add(propGroup);
+
+  // Cockpit canopy
+  var canopy=new THREE.Mesh(new THREE.SphereGeometry(0.38,16,10,0,Math.PI*2,0,Math.PI*0.55),
+    new THREE.MeshStandardMaterial({color:0x88ccff,metalness:0.1,roughness:0.05,transparent:true,opacity:0.35}));
+  canopy.position.set(0,0.42,0.35); canopy.scale.z=1.8; ac.add(canopy);
+
+  // Carrello
+  [-0.9,0.9].forEach(function(x){
+    var leg=new THREE.Mesh(new THREE.CylinderGeometry(0.025,0.025,0.3,8),darkMat);
+    leg.position.set(x,-0.12,0.3); ac.add(leg);
+    var wheel=new THREE.Mesh(new THREE.CylinderGeometry(0.1,0.1,0.06,16),darkMat);
+    wheel.rotation.z=Math.PI/2; wheel.position.set(x,-0.28,0.3); ac.add(wheel);
+  });
+  var nleg=new THREE.Mesh(new THREE.CylinderGeometry(0.02,0.02,0.28,8),darkMat);
+  nleg.position.set(0,-0.1,1.1); ac.add(nleg);
+  var nwheel=new THREE.Mesh(new THREE.CylinderGeometry(0.08,0.08,0.05,16),darkMat);
+  nwheel.rotation.z=Math.PI/2; nwheel.position.set(0,-0.25,1.1); ac.add(nwheel);
+
+  // Stripe blu Diamond
+  var stripe=new THREE.Mesh(new THREE.BoxGeometry(2.8,0.06,0.18),blueMat);
+  stripe.position.set(0,0.08,0.2); ac.add(stripe);
+
+  var wrapper=new THREE.Group(); wrapper.add(ac);
+  wrapper.position.set(0,0.5,-8);
+  window.propeller=propGroup;
+  return wrapper;
+}
+
+// ---- INIT SCENA ----
+function initScene(aircraftWrapper){
+  airplane=aircraftWrapper;
+  var canvas=document.getElementById('threeCanvas');
+  scene=new THREE.Scene();
+  scene.background=new THREE.Color(0x8bbfdb); // cielo romano
+  scene.fog=new THREE.FogExp2(0xaad4e8,0.012);
+
+  camera=new THREE.PerspectiveCamera(52,window.innerWidth/window.innerHeight,0.2,150);
+  camera.position.set(0,3,15);
+
+  renderer=new THREE.WebGLRenderer({canvas:canvas,antialias:true,powerPreference:'high-performance'});
+  renderer.setSize(window.innerWidth,window.innerHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+  renderer.shadowMap.enabled=true;
+  renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+  renderer.toneMapping=THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure=1.15;
+  renderer.outputEncoding=THREE.sRGBEncoding;
+
+  // Luci
+  scene.add(new THREE.AmbientLight(0xd4e8f0,0.65));
+  var sun=new THREE.DirectionalLight(0xfff5e0,1.9);
+  sun.position.set(20,30,-8); sun.castShadow=true;
+  sun.shadow.mapSize.width=2048; sun.shadow.mapSize.height=2048;
+  sun.shadow.camera.near=0.5; sun.shadow.camera.far=100;
+  sun.shadow.camera.left=-40; sun.shadow.camera.right=40;
+  sun.shadow.camera.top=40; sun.shadow.camera.bottom=-40;
+  sun.shadow.bias=-0.001;
+  scene.add(sun);
+  scene.add(new THREE.HemisphereLight(0x87CEEB,0x4a6b35,0.5));
+
+  // Luce fill dal basso (rimbalzo terreno)
+  var fillLight=new THREE.DirectionalLight(0x90b870,0.3);
+  fillLight.position.set(-5,-10,5);
+  scene.add(fillLight);
+
+  // --- TERRENO LIRU ---
+  groundGroup=new THREE.Group();
+  var liruTex=createLIRUTexture();
+  var groundGeo=new THREE.PlaneGeometry(90,75,1,1);
+  var groundMat=new THREE.MeshStandardMaterial({
+    map:liruTex,
+    roughness:0.85,
+    metalness:0.0,
+  });
+  var ground=new THREE.Mesh(groundGeo,groundMat);
+  ground.rotation.x=-Math.PI/2;
+  ground.position.y=-0.05;
+  ground.receiveShadow=true;
+  groundGroup.add(ground);
+  scene.add(groundGroup);
+
+  // --- NUVOLE ---
+  cloudGroup=new THREE.Group();
+  var cloudGeo=new THREE.SphereGeometry(0.9,7,6);
+  var cloudMat=new THREE.MeshStandardMaterial({color:0xffffff,roughness:1,transparent:true,opacity:0.72});
+  for(var i=0;i<35;i++){
+    var cl=new THREE.Group();
+    var nb=5+Math.floor(Math.random()*7);
+    for(var j=0;j<nb;j++){
+      var b=new THREE.Mesh(cloudGeo,cloudMat);
+      b.position.set((Math.random()-0.5)*3.5,(Math.random()-0.5)*1.4,(Math.random()-0.5)*2.5);
+      b.scale.set(0.7+Math.random()*1.8,0.25+Math.random()*0.55,0.7+Math.random()*1.8);
+      cl.add(b);
+    }
+    cl.position.set((Math.random()-0.5)*100,9+Math.random()*18,-30-Math.random()*45);
+    cloudGroup.add(cl);
+  }
+  scene.add(cloudGroup);
+
+  // --- AEREO ---
+  scene.add(airplane);
+
+  // --- ENVIRONMENT MAP semplice ---
+  var pmremGenerator=null;
+  try{
+    pmremGenerator=new THREE.PMREMGenerator(renderer);
+    pmremGenerator.compileEquirectangularShader();
+    var envScene=new THREE.Scene();
+    envScene.background=new THREE.Color(0x87CEEB);
+    var envTex=pmremGenerator.fromScene(envScene).texture;
+    scene.environment=envTex;
+    pmremGenerator.dispose();
+  }catch(e){}
+
+  // --- CAMERA CONTROLS ---
+  canvas.addEventListener('mousedown',function(e){isDragging=true;prevMouse.x=e.clientX;prevMouse.y=e.clientY;});
+  window.addEventListener('mousemove',function(e){
+    if(!isDragging)return;
+    dragRotY+=(e.clientX-prevMouse.x)*0.004;
+    dragRotX+=(e.clientY-prevMouse.y)*0.004;
+    dragRotX=Math.max(-0.55,Math.min(0.55,dragRotX));
+    prevMouse.x=e.clientX; prevMouse.y=e.clientY;
+  });
+  window.addEventListener('mouseup',function(){isDragging=false;});
+
+  // Touch support
+  canvas.addEventListener('touchstart',function(e){isDragging=true;prevMouse.x=e.touches[0].clientX;prevMouse.y=e.touches[0].clientY;},{passive:true});
+  canvas.addEventListener('touchmove',function(e){
+    if(!isDragging)return;
+    dragRotY+=(e.touches[0].clientX-prevMouse.x)*0.003;
+    dragRotX+=(e.touches[0].clientY-prevMouse.y)*0.003;
+    dragRotX=Math.max(-0.5,Math.min(0.5,dragRotX));
+    prevMouse.x=e.touches[0].clientX; prevMouse.y=e.touches[0].clientY;
+  },{passive:true});
+  canvas.addEventListener('touchend',function(){isDragging=false;},{passive:true});
+
+  window.addEventListener('resize',function(){
+    camera.aspect=window.innerWidth/window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth,window.innerHeight);
+  });
+
+  window.addEventListener('keydown',function(e){
+    if(e.key==='l'||e.key==='L'){sideMultiplier*=-1;showToast(sideMultiplier===1?'Camera: DESTRA':'Camera: SINISTRA','info',1500);}
+  });
+
+  initAudio();
+  hidePreloader();
+  animate();
+  console.log('✅ LIRU scena pronta.');
+}
+
+// ---- FLIGHT STATES ----
+var sectionFlightStates={
+  home:    {x:0,  y:0.5, z:-8,  rx:0,    ry:0,    rz:0,    speed:0,  alt:0,   vs:0,   hdg:340},
+  corsi:   {x:0,  y:5,   z:-20, rx:-0.12,ry:0,    rz:0,    speed:82, alt:500, vs:800, hdg:340},
+  flotta:  {x:-12,y:6,   z:6,   rx:-0.08,ry:0.45, rz:-0.1, speed:115,alt:1000,vs:0,   hdg:160},
+  team:    {x:-7, y:4.5, z:0,   rx:-0.1, ry:0.28, rz:-0.06,speed:90, alt:800, vs:-500,hdg:250},
+  contatti:{x:0,  y:1.0, z:-6,  rx:-0.05,ry:0,    rz:0,    speed:72, alt:100, vs:-400,hdg:340}
+};
+
+function showSection(id){
+  if(isTransitioning||id===currentSection)return;
+  isTransitioning=true;
+  document.querySelectorAll('.section-3d').forEach(function(el){
+    el.classList.add('transitioning'); el.classList.remove('active');
+  });
+  setTimeout(function(){
+    document.querySelectorAll('.section-3d').forEach(function(el){el.classList.remove('transitioning');});
+    var target=document.getElementById('section-'+id);
+    if(target)target.classList.add('active');
+  },300);
+  document.querySelectorAll('.nav-btn').forEach(function(b){
+    b.classList.toggle('active',b.dataset.section===id);
+  });
+  var st=sectionFlightStates[id];
+  if(st){
+    targetFlightState={x:st.x,y:st.y,z:st.z,rx:st.rx,ry:st.ry,rz:st.rz};
+    flightData={speed:st.speed,altitude:st.alt,vs:st.vs,heading:st.hdg};
+    flightPhase=id; flightProgress=0;
+    document.getElementById('hud').classList.add('active');
+  }
+  currentSection=id;
+  setTimeout(function(){isTransitioning=false;},2500);
+}
+
+// ---- ANIMAZIONE ----
+function easeInOutCubic(t){return t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;}
+function easeOutExpo(t){return t===1?1:1-Math.pow(2,-10*t);}
+
+function animate(){
+  requestAnimationFrame(animate);
+  if(!scene||!renderer)return;
+  time+=0.016;
+  flightProgress=Math.min(1,flightProgress+0.005);
+
+  // Rotazione elica
+  if(window.propeller){
+    var propSpeed=flightData.speed*0.025+0.4;
+    window.propeller.rotation.z+=propSpeed*0.055;
+  }
+
+  // Posizione aereo
+  if(airplane){
+    var t=flightProgress;
+    var ex=t<0.5?easeInOutCubic(t*2)*0.5:easeInOutCubic((t-0.5)*2)*0.5+0.5;
+    airplane.position.x=currentFlightState.x+(targetFlightState.x-currentFlightState.x)*ex;
+    airplane.position.y=currentFlightState.y+(targetFlightState.y-currentFlightState.y)*easeOutExpo(t);
+    airplane.position.z=currentFlightState.z+(targetFlightState.z-currentFlightState.z)*ex;
+    airplane.rotation.x=currentFlightState.rx+(targetFlightState.rx-currentFlightState.rx)*ex;
+    airplane.rotation.y=currentFlightState.ry+(targetFlightState.ry-currentFlightState.ry)*ex;
+    airplane.rotation.z=currentFlightState.rz+(targetFlightState.rz-currentFlightState.rz)*ex;
+    if(flightProgress>=1)currentFlightState={...targetFlightState};
+
+    // Micro-animazione hover
+    var hoverAmt=flightData.speed>0?0.04:0.01;
+    airplane.position.y+=Math.sin(time*1.2)*hoverAmt;
+    airplane.rotation.z+=Math.sin(time*0.8)*0.004;
+
+    // Camera offset per sezione
+    var baseOffsets={
+      home:    {x:3.0, y:2.0, z:5},
+      corsi:   {x:-3.5,y:2.5, z:7},
+      flotta:  {x:4.5, y:-1.5,z:8},
+      team:    {x:-4.0,y:-2.0,z:6},
+      contatti:{x:2.5, y:1.8, z:4}
+    };
+    var off=baseOffsets[flightPhase]||baseOffsets.home;
+    camTarget.x=airplane.position.x+off.x*sideMultiplier+dragRotY*5;
+    camTarget.y=off.y+airplane.position.y*0.25+dragRotX*2.5;
+    camTarget.z=airplane.position.z+off.z+7;
+  }
+
+  // Camera smooth follow
+  var camLerp=isDragging?0.08:0.03;
+  camCurrent.x+=(camTarget.x-camCurrent.x)*camLerp;
+  camCurrent.y+=(camTarget.y-camCurrent.y)*camLerp;
+  camCurrent.z+=(camTarget.z-camCurrent.z)*camLerp;
+  camera.position.set(camCurrent.x,Math.max(0.8,camCurrent.y),camCurrent.z);
+  camera.lookAt(airplane.position.x,airplane.position.y+0.5,airplane.position.z);
+
+  // HUD
+  document.getElementById('hud-speed').innerHTML=Math.round(flightData.speed)+'<span class="hud-unit">kt</span>';
+  document.getElementById('hud-alt').innerHTML=Math.round(flightData.altitude)+'<span class="hud-unit">ft</span>';
+  document.getElementById('hud-vs').innerHTML=(flightData.vs>0?'+':'')+Math.round(flightData.vs)+'<span class="hud-unit">fpm</span>';
+  document.getElementById('hud-hdg').innerHTML=Math.round(flightData.heading)+'<span class="hud-unit">°</span>';
+
+  // Nuvole drift
+  cloudGroup.children.forEach(function(cl){
+    cl.position.x+=0.003;
+    if(cl.position.x>55)cl.position.x=-55;
+  });
+
+  updateAudio(flightData.speed);
+  renderer.render(scene,camera);
+}
+
+// ---- AVVIO ----
+window.addEventListener('load',function(){
+  loadDA40fromBase64().then(function(wrapper){
+    window.propeller=propGroup;
+    initScene(wrapper);
+    showSection('home');
+  });
+});
+</script>
+</body>
+</html>
